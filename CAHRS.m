@@ -27,7 +27,10 @@ properties (Access = public)
     % these are for storing the angles gamma_a and gamma_m
     gammaA         = NaN;
     gammaM         = NaN;    
-    
+    cos_muA_gammaA = NaN;
+    sin_muA_gammaA = NaN;
+    cos_muM_gammaM = NaN;
+    sin_muM_gammaM = NaN;    
     % store global acceleration vector
     gAcc = [];
 end
