@@ -172,7 +172,7 @@ methods (Access = public)
                 qn1 = qn1*qNorm;
                 qn4 = qn4*qNorm; % normalise to unit quaternions
             end
-            % Rotate global frame towards 'up'        
+            % Rotate global frame towards 'north'        
             qGiii1 = qn1*qGii1 - qn2*qGii2 - qn3*qGii3 - qn4*qGii4;
             qGiii2 = qn1*qGii2 + qn2*qGii1 + qn3*qGii4 - qn4*qGii3;
             qGiii3 = qn1*qGii3 - qn2*qGii4 + qn3*qGii1 + qn4*qGii2;
