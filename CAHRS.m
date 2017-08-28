@@ -48,6 +48,7 @@ methods (Access = public)
                 obj.muMag = varargin{i+1};
             elseif strcmp(varargin{i},'qInit')
                 obj.qGlobalPrev = varargin{i+1};
+                obj.qGlobal = varargin{i+1};
             else error('Invalid argument');
             end
         end;
