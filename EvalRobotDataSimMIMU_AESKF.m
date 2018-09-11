@@ -5,7 +5,7 @@
 % 4) validate that the euler angles derived from the quaternions are
 % equivalent
 function [] = main()
-clear all;clc;
+clear all;clc;close all;
 addpath('.\CAHRS'); % path to CAHRS functions and class files
 addpath('.\AESKF_functions'); % path to AESKF functions and class files
 addpath('.\quaternion_functions');
@@ -23,10 +23,21 @@ N_VAR_GAM_M = 8;
 fsMIMU      = 100;
 delta_mag_b_xy = (2.5*10^-3) * fsMIMU;
 
-% file ='Up-Down.mat' 
-% file = 'Left-Right.mat' 
+for i = 1:6
+if i == 1
+file ='UpDown.mat'; 
+elseif i == 2
+file ='UpDown_90_deg_rot.mat'; 
+elseif i == 3
+file = 'LeftRight.mat'; 
+elseif i == 4
+file = 'LeftRight_90_deg_rot.mat'; 
+elseif i == 5
 file = 'ZigZag.mat'; 
-
+elseif i == 6
+file ='ZigZag_45_deg_rot.mat'; 
+else
+end
 load(file);
 
 
@@ -109,6 +120,8 @@ legend(h,lgstr,'Orientation','Horizontal');
 
 segments = table2array(imu_real_sim_data(:,{'segment'}));
 idx_empty = cellfun(@isempty,segments);
+% find last empty at the beginning, < 10,000
+seg_offset = find(idx_empty(1:10000)== 1, 1, 'last' );
 u_segments = unique(segments(~idx_empty));
 N_SEGMENTS = length(u_segments);
 sync_segs = zeros(N_SEGMENTS,2);
@@ -116,7 +129,7 @@ for u = 1:N_SEGMENTS
     idx_seg = find(strcmp(segments(~idx_empty),u_segments(u)));
     idx_seg_beg = idx_seg(1);
     idx_seg_end = idx_seg(end);
-    sync_segs(u,1:2) = [idx_seg_beg,idx_seg_end];
+    sync_segs(u,1:2) = [idx_seg_beg,idx_seg_end] + seg_offset;
 end
 
 sync_segs = reshape(sync_segs',[],1);
@@ -162,105 +175,106 @@ line(ptime(repmat(sync_segs +1,1,2))',repmat(ylim,18,1)','Color','k');
 legend(h,lgstr,'Orientation','Horizontal');        
 linkaxes(hsub,'x');    
        
-%% Calculate the RMSE of the segments
-colorscheme = 'cool';
-xlabels={'A','B','C','D','E','F','G','H','I'};
-ylabels={'CAHRS','AESKF'};
-ylabels={'',''};
-blogmap = true;
-NumTicks = 9;
-
-rmse_segs = [sync_segs(1:6:end),sync_segs(6:6:end)];
-alphaSegs = cell(length(estIdx),1);
-rmse_segs(1,1) = 1000;
-[N_RUNS,~]=size(rmse_segs);
-
-rse_real_cahrs = sqrt( (tru_eul_mea-est_eul_cahrs).^2 );
-rse_real_erkf = sqrt( (tru_eul_mea-est_eul_aeskf).^2 );
-
-rmse_real_cahrs = nan(N_RUNS,2);
-rmse_real_erkf  = nan(N_RUNS,2);
-
-for r = 1:N_RUNS
-    seg = [rmse_segs(r,1):rmse_segs(r,2)]';
-    alphaSegs(seg) = xlabels(r);
-    rmse_real_cahrs(r,:) = sum(rse_real_cahrs(seg,1:2))./length(seg);
-    rmse_real_erkf(r,:) = sum(rse_real_erkf(seg,1:2))./length(seg);
+% %% Calculate the RMSE of the segments
+% colorscheme = 'cool';
+% xlabels={'A','B','C','D','E','F','G','H','I'};
+% ylabels={'CAHRS','AESKF'};
+% ylabels={'',''};
+% blogmap = true;
+% NumTicks = 9;
+% 
+% rmse_segs = [sync_segs(1:6:end),sync_segs(6:6:end)];
+% alphaSegs = cell(length(estIdx),1);
+% rmse_segs(1,1) = 1000;
+% [N_RUNS,~]=size(rmse_segs);
+% 
+% rse_real_cahrs = sqrt( (tru_eul_mea-est_eul_cahrs).^2 );
+% rse_real_erkf = sqrt( (tru_eul_mea-est_eul_aeskf).^2 );
+% 
+% rmse_real_cahrs = nan(N_RUNS,2);
+% rmse_real_erkf  = nan(N_RUNS,2);
+% 
+% for r = 1:N_RUNS
+%     seg = [rmse_segs(r,1):rmse_segs(r,2)]';
+%     alphaSegs(seg) = xlabels(r);
+%     rmse_real_cahrs(r,:) = sum(rse_real_cahrs(seg,1:2))./length(seg);
+%     rmse_real_erkf(r,:) = sum(rse_real_erkf(seg,1:2))./length(seg);
+% end
+% 
+% rollHeatMapReal = [rmse_real_cahrs(:,1),...
+%                    rmse_real_erkf(:,1)]';
+% 
+% pitchHeatMapReal = [rmse_real_cahrs(:,2),...
+%                     rmse_real_erkf(:,2)]';
+% 
+% mincolor =  0;
+% maxcolor = 20;
+% 
+% if expDays == 1
+%     titleStr = sprintf('Up-Down');
+%     filesuffix = 'UpDown.csv';
+% elseif expDays == 2
+%     titleStr = sprintf('Up-Down with 90%s Rotation',char(176));
+%     filesuffix = 'UpDown_90_deg_rot.csv';
+% elseif expDays == 3
+%     titleStr = sprintf('Left-Right');
+%     filesuffix = 'LeftRight.csv';    
+% elseif expDays == 4
+%     titleStr = sprintf('Left-Right with 90%s Rotation',char(176));
+%     filesuffix = 'LeftRight_90_deg_rot.csv';
+% 
+% elseif expDays == 5
+%     titleStr = sprintf('Zig-Zag');
+%     filesuffix = 'ZigZag.csv';    
+% elseif expDays == 6
+%     titleStr = sprintf('Zig-Zag + 45%s ',char(176));
+%     filesuffix = 'ZigZag_45_deg_rot.csv';        
+% else
+%     
+% end           
+% %           
+% 
+% [p_imu_roll] = signrank(rmse_real_cahrs(:,1),rmse_real_erkf(:,1),'alpha',0.05,'tail','both');
+% [p_imu_pitch]= signrank(rmse_real_cahrs(:,2),rmse_real_erkf(:,2),'alpha',0.05,'tail','both');
+% fprintf('%s\n', titleStr);
+% fprintf('imu: %s: $p$ = %0.3f, %s: $p$= %0.3f \n','$\phi$',p_imu_roll,'$\theta$', p_imu_pitch);
+% 
+% 
+% h_fig = updateFigureContents(['Heat Map RMSE - Larger Font - ',titleStr]);
+% set(h_fig,'Units', 'Centimeters','Position', [0.5, 0, 9, 6], ...
+%     'PaperUnits', 'Centimeters', 'PaperSize', [9, 6]);
+% % subplot = @(m,n,p) ...
+% %     subtightplot (m, n, p, [0.075 0.01], [0.1 0.1], [0.06 0.1]);
+% 
+% subplot(2,1,1)
+% himg = heatmap(rollHeatMapReal,xlabels,[],'%1.2f',...
+%     'Colormap',colorscheme,'UseLogColormap', blogmap, ...
+%     'MinColorValue', mincolor, 'MaxColorValue', maxcolor,...
+%     'GridLines', ':','FontSize',10);
+% 
+% [RotX,RotY,Axis,XTicks,XTickLabels,YTicks,YTickLabels] =...
+%     XYrotalabel(0,90,gca,2:2:8,xlabels(2:2:8),1:2,ylabels,[],[]);
+% set(gca,'XTickLabel',[]);
+% 
+% 
+% subplot(2,1,2)
+% himg = heatmap(pitchHeatMapReal,xlabels,[],'%1.2f',...
+%     'Colormap',colorscheme,'UseLogColormap', blogmap, ...
+%     'MinColorValue', mincolor, 'MaxColorValue', maxcolor,...
+%     'GridLines', ':','FontSize',10);
+% 
+% [RotX,RotY,Axis,XTicks,XTickLabels,YTicks,YTickLabels] =...
+%     XYrotalabel(0,90,gca,2:2:8,xlabels(2:2:8),1:2,ylabels,[],[]);
+% set(gca,'XTickLabel',[]);
+% 
+% set(gcf,'NextPlot','add');
+% axes;
+% 
+% 
+% h = title(titleStr,'FontSize',12);
+% set(gca,'Visible','off');
+% set(h,'Visible','on');
 end
-
-rollHeatMapReal = [rmse_real_cahrs(:,1),...
-                   rmse_real_erkf(:,1)]';
-
-pitchHeatMapReal = [rmse_real_cahrs(:,2),...
-                    rmse_real_erkf(:,2)]';
-
-mincolor =  0;
-maxcolor = 20;
-
-if expDays == 1
-    titleStr = sprintf('Up-Down');
-    filesuffix = 'UpDown.csv';
-elseif expDays == 2
-    titleStr = sprintf('Up-Down with 90%s Rotation',char(176));
-    filesuffix = 'UpDown_90_deg_rot.csv';
-elseif expDays == 3
-    titleStr = sprintf('Left-Right');
-    filesuffix = 'LeftRight.csv';    
-elseif expDays == 4
-    titleStr = sprintf('Left-Right with 90%s Rotation',char(176));
-    filesuffix = 'LeftRight_90_deg_rot.csv';
-
-elseif expDays == 5
-    titleStr = sprintf('Zig-Zag');
-    filesuffix = 'ZigZag.csv';    
-elseif expDays == 6
-    titleStr = sprintf('Zig-Zag + 45%s ',char(176));
-    filesuffix = 'ZigZag_45_deg_rot.csv';        
-else
-    
-end           
-%           
-
-[p_imu_roll] = signrank(rmse_real_cahrs(:,1),rmse_real_erkf(:,1),'alpha',0.05,'tail','both');
-[p_imu_pitch]= signrank(rmse_real_cahrs(:,2),rmse_real_erkf(:,2),'alpha',0.05,'tail','both');
-fprintf('%s\n', titleStr);
-fprintf('imu: %s: $p$ = %0.3f, %s: $p$= %0.3f \n','$\phi$',p_imu_roll,'$\theta$', p_imu_pitch);
-
-
-h_fig = updateFigureContents(['Heat Map RMSE - Larger Font - ',titleStr]);
-set(h_fig,'Units', 'Centimeters','Position', [0.5, 0, 9, 6], ...
-    'PaperUnits', 'Centimeters', 'PaperSize', [9, 6]);
-% subplot = @(m,n,p) ...
-%     subtightplot (m, n, p, [0.075 0.01], [0.1 0.1], [0.06 0.1]);
-
-subplot(2,1,1)
-himg = heatmap(rollHeatMapReal,xlabels,[],'%1.2f',...
-    'Colormap',colorscheme,'UseLogColormap', blogmap, ...
-    'MinColorValue', mincolor, 'MaxColorValue', maxcolor,...
-    'GridLines', ':','FontSize',10);
-
-[RotX,RotY,Axis,XTicks,XTickLabels,YTicks,YTickLabels] =...
-    XYrotalabel(0,90,gca,2:2:8,xlabels(2:2:8),1:2,ylabels,[],[]);
-set(gca,'XTickLabel',[]);
-
-
-subplot(2,1,2)
-himg = heatmap(pitchHeatMapReal,xlabels,[],'%1.2f',...
-    'Colormap',colorscheme,'UseLogColormap', blogmap, ...
-    'MinColorValue', mincolor, 'MaxColorValue', maxcolor,...
-    'GridLines', ':','FontSize',10);
-
-[RotX,RotY,Axis,XTicks,XTickLabels,YTicks,YTickLabels] =...
-    XYrotalabel(0,90,gca,2:2:8,xlabels(2:2:8),1:2,ylabels,[],[]);
-set(gca,'XTickLabel',[]);
-
-set(gcf,'NextPlot','add');
-axes;
-
-
-h = title(titleStr,'FontSize',12);
-set(gca,'Visible','off');
-set(h,'Visible','on');
 end
 
 
