@@ -72,9 +72,14 @@ properties (Access = public)
     cM      = 0.1;     % normalised cutoff-frequency 
     gMagRef = [0 0 0];
     mag_dis = [0 0 0];
+    mag_now = [0 0 0]; 
+    mag_pre = [0 0 0]; 
     mag_now_xy = [0 0];
     mag_pre_xy = [0 0];
+    gGyr = [0 0 0];
     gAcc = [0 0 0];
+    gAcc_now = [0 0 0];
+    gAcc_pre = [0 0 0];
     gMag = [0 0 0];
     
     deltaMagBxy = [NaN];
@@ -84,6 +89,8 @@ properties (Access = public)
     qAngVelDev  = [1 0 0 0];
     qGlobal     = [1 0 0 0];
     qGlobalPrev = [1 0 0 0];        
+    muAcc       = 0.005;
+    muMag       = 0.005;
     
     % these are for storing the angles gamma_a and gamma_m
     gammaA      = 0;
@@ -362,6 +369,7 @@ methods (Access = public)
         % model magnetic field strength as a first order low pass filtered
         % process, i.e., zMag = m_k - cM * mag_dis;
         yMag = Mag;
+        obj.mag_now = yMag;
         zMag = yMag - obj.cM(1) * obj.mag_dis;  % sub 3, x3
         Mag  = zMag;
         Mag1 = Mag(1);    
@@ -389,6 +397,7 @@ methods (Access = public)
 
             obj.deltaMagBxy = delta_mag_b_XY;              
             obj.mag_pre_xy = obj.mag_now_xy; % set as previous for next time
+            obj.mag_pre = yMag;
             if delta_mag_b_XY < obj.delta_b_xy
                 % Get fraction of rotation from mag in global to north (xy components only)
                 qn2 = 0; qn3 = 0;

@@ -154,7 +154,6 @@ for frame = 1:FRAMES
     R_gam_as(frame,:)    = aeskf_Obj.R_GamAS;
     R_gam_al(frame,:)    = aeskf_Obj.R_GamAL;
     ext_acc(frame,:)    = aeskf_Obj.ext_acc;
-    a_mag_var(frame,:)  = aeskf_Obj.a_mag_var;
     % northward angle components
     gam_m(frame, :)     = aeskf_Obj.gammaM;
     avg_gam_m(frame, :) = aeskf_Obj.AvgGamM;
