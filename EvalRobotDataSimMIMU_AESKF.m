@@ -63,7 +63,6 @@ q_mea = table2array(imu_real_sim_data(:,{'qw','qx','qy','qz'}));
 
 %% --- Real measurements from the smartphone
 % CAHRS, fixed gain, 
-
 [quats_cahrs] = ...
 opMimuDynamicCAHRS_ArcTan('qInit',q_mea(1,:),...
 'bDynamicMu',bIsDynamic,...
@@ -78,6 +77,7 @@ i_static = (~bIsDynamic) & ([1:N_TIME]' < 1000);
 mRef = 1;
 gRef = mean(vecnormalize(acc_cal(i_static,:)));
 
+% Adaptive Error-State Kalman Filter
 [quats_aeskf, R_gamma_A_aeskf, avg_gamma_A_aeskf, ...
  gamma_A_aeskf, Pa_pri_aeskf, Pk_pos_aeskf, Ka_aeskf,...
  R_gamma_M_aeskf, avg_gamma_M_aeskf, ...
@@ -93,7 +93,8 @@ gRef = mean(vecnormalize(acc_cal(i_static,:)));
 est_eul_cahrs = rad2deg(quaternion2nautical(quats_cahrs));  % ahrs estimate 
 est_eul_aeskf = rad2deg(quaternion2nautical(quats_aeskf)); % ahrs estimate2
 tru_eul_mea   = rad2deg(quaternion2nautical(q_mea)); % truth measurement
-        
+
+% wrap angle errors so bound between [-pi, pi]
 for e = 1:3
     eulerAngErr = tru_eul_mea(:,e)-est_eul_cahrs(:,e); % order not important since error is abs
     greater180 = eulerAngErr > 180;  
@@ -131,21 +132,7 @@ for u = 1:N_SEGMENTS
     idx_seg_end = idx_seg(end);
     sync_segs(u,1:2) = [idx_seg_beg,idx_seg_end] + seg_offset;
 end
-
 sync_segs = reshape(sync_segs',[],1);
-
-
-% stat_segs = reshape(phonedata.statSegments',[],1);
-% % adjust stationary period for convergence
-% sync_segs(2:end-1) = sync_segs(2:end-1);
-% % adjust for algorithm convergence
-% sync_segs(1) = sync_segs(1);
-% % adjust for alignment between reference systems
-% sync_segs(end) = sync_segs(end)+ t21; 
-% stat_segs(end) = stat_segs(end)+ t21;
-% sub_sync_segs = [sync_segs(1:6:end);sync_segs(6:6:end)];
-% sub_stat_segs = [stat_segs(1:6:end);stat_segs(6:6:end)];
-% mid_segs = floor(mean([sync_segs(1:6:end),sync_segs(6:6:end)] +1,2));
 line(ptime(repmat(sync_segs +1,1,2))',repmat(ylim,18,1)','Color','k');
 
 hsub(2)=subplot(4,1,2);hold on;lgstr={};h=[];
@@ -174,106 +161,7 @@ h(end+1)=plot(ptime,Pk_pos_aeskf,'r','LineWidth',2);lgstr{end+1}='Pk-real';
 line(ptime(repmat(sync_segs +1,1,2))',repmat(ylim,18,1)','Color','k');
 legend(h,lgstr,'Orientation','Horizontal');        
 linkaxes(hsub,'x');    
-       
-% %% Calculate the RMSE of the segments
-% colorscheme = 'cool';
-% xlabels={'A','B','C','D','E','F','G','H','I'};
-% ylabels={'CAHRS','AESKF'};
-% ylabels={'',''};
-% blogmap = true;
-% NumTicks = 9;
-% 
-% rmse_segs = [sync_segs(1:6:end),sync_segs(6:6:end)];
-% alphaSegs = cell(length(estIdx),1);
-% rmse_segs(1,1) = 1000;
-% [N_RUNS,~]=size(rmse_segs);
-% 
-% rse_real_cahrs = sqrt( (tru_eul_mea-est_eul_cahrs).^2 );
-% rse_real_erkf = sqrt( (tru_eul_mea-est_eul_aeskf).^2 );
-% 
-% rmse_real_cahrs = nan(N_RUNS,2);
-% rmse_real_erkf  = nan(N_RUNS,2);
-% 
-% for r = 1:N_RUNS
-%     seg = [rmse_segs(r,1):rmse_segs(r,2)]';
-%     alphaSegs(seg) = xlabels(r);
-%     rmse_real_cahrs(r,:) = sum(rse_real_cahrs(seg,1:2))./length(seg);
-%     rmse_real_erkf(r,:) = sum(rse_real_erkf(seg,1:2))./length(seg);
-% end
-% 
-% rollHeatMapReal = [rmse_real_cahrs(:,1),...
-%                    rmse_real_erkf(:,1)]';
-% 
-% pitchHeatMapReal = [rmse_real_cahrs(:,2),...
-%                     rmse_real_erkf(:,2)]';
-% 
-% mincolor =  0;
-% maxcolor = 20;
-% 
-% if expDays == 1
-%     titleStr = sprintf('Up-Down');
-%     filesuffix = 'UpDown.csv';
-% elseif expDays == 2
-%     titleStr = sprintf('Up-Down with 90%s Rotation',char(176));
-%     filesuffix = 'UpDown_90_deg_rot.csv';
-% elseif expDays == 3
-%     titleStr = sprintf('Left-Right');
-%     filesuffix = 'LeftRight.csv';    
-% elseif expDays == 4
-%     titleStr = sprintf('Left-Right with 90%s Rotation',char(176));
-%     filesuffix = 'LeftRight_90_deg_rot.csv';
-% 
-% elseif expDays == 5
-%     titleStr = sprintf('Zig-Zag');
-%     filesuffix = 'ZigZag.csv';    
-% elseif expDays == 6
-%     titleStr = sprintf('Zig-Zag + 45%s ',char(176));
-%     filesuffix = 'ZigZag_45_deg_rot.csv';        
-% else
-%     
-% end           
-% %           
-% 
-% [p_imu_roll] = signrank(rmse_real_cahrs(:,1),rmse_real_erkf(:,1),'alpha',0.05,'tail','both');
-% [p_imu_pitch]= signrank(rmse_real_cahrs(:,2),rmse_real_erkf(:,2),'alpha',0.05,'tail','both');
-% fprintf('%s\n', titleStr);
-% fprintf('imu: %s: $p$ = %0.3f, %s: $p$= %0.3f \n','$\phi$',p_imu_roll,'$\theta$', p_imu_pitch);
-% 
-% 
-% h_fig = updateFigureContents(['Heat Map RMSE - Larger Font - ',titleStr]);
-% set(h_fig,'Units', 'Centimeters','Position', [0.5, 0, 9, 6], ...
-%     'PaperUnits', 'Centimeters', 'PaperSize', [9, 6]);
-% % subplot = @(m,n,p) ...
-% %     subtightplot (m, n, p, [0.075 0.01], [0.1 0.1], [0.06 0.1]);
-% 
-% subplot(2,1,1)
-% himg = heatmap(rollHeatMapReal,xlabels,[],'%1.2f',...
-%     'Colormap',colorscheme,'UseLogColormap', blogmap, ...
-%     'MinColorValue', mincolor, 'MaxColorValue', maxcolor,...
-%     'GridLines', ':','FontSize',10);
-% 
-% [RotX,RotY,Axis,XTicks,XTickLabels,YTicks,YTickLabels] =...
-%     XYrotalabel(0,90,gca,2:2:8,xlabels(2:2:8),1:2,ylabels,[],[]);
-% set(gca,'XTickLabel',[]);
-% 
-% 
-% subplot(2,1,2)
-% himg = heatmap(pitchHeatMapReal,xlabels,[],'%1.2f',...
-%     'Colormap',colorscheme,'UseLogColormap', blogmap, ...
-%     'MinColorValue', mincolor, 'MaxColorValue', maxcolor,...
-%     'GridLines', ':','FontSize',10);
-% 
-% [RotX,RotY,Axis,XTicks,XTickLabels,YTicks,YTickLabels] =...
-%     XYrotalabel(0,90,gca,2:2:8,xlabels(2:2:8),1:2,ylabels,[],[]);
-% set(gca,'XTickLabel',[]);
-% 
-% set(gcf,'NextPlot','add');
-% axes;
-% 
-% 
-% h = title(titleStr,'FontSize',12);
-% set(gca,'Visible','off');
-% set(h,'Visible','on');
+
 end
 end
 
