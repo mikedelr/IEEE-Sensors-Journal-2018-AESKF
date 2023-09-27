@@ -6,7 +6,7 @@ function [ varargout ] = wrapper_MIMU_AESKF( varargin )
 %
 %   Inputs:: (must be 'string', value pairs, e.g., 'fs',100 .... 
 %             e.g., sampling rate of 100 Hz)
-%       'qInit'       - initial orientation quaternion
+%       'q0'          - initial orientation quaternion
 %       'fs'          - sampling rate
 %       'Acc'         - accelerometer signal size = [N x 3]
 %       'Gyr'         - gyroscope     signal size = [N x 3]
