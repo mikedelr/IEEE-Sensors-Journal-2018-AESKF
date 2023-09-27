@@ -1,6 +1,6 @@
 function [ varargout ] = wrapper_MIMU_AESKF( varargin )
-%WRAPPER_MIMU_CAHRS_IKF_ARCTAN Wrapper function designed to process a dataset of
-%accelerometer, gyroscope and magnetometer through CAHRS
+%WRAPPER_MIMU_AESKF Wrapper function designed to process a dataset of
+%accelerometer, gyroscope and magnetometer through AESKF
 %   [ quatsMIMU ] = ...
 %   wrapper_MIMU_AESKF( ... )
 %
