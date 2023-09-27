@@ -11,10 +11,16 @@ function [ varargout ] = wrapper_MIMU_AESKF( varargin )
 %       'Acc'         - accelerometer signal size = [N x 3]
 %       'Gyr'         - gyroscope     signal size = [N x 3]
 %       'Mag'         - magnetometer  signal size = [N x 3]
-%       'N_VAR_GAM_A' - number of samples over which to calculate the 
+%       'N_VAR_GAM_AS' - number of samples over which to calculate the 
+%                       short-term variance of the angle between the up vector and the 
+%                       accelerometer measurement vector expressed in the
+%                       estimated GFR. Only used when device appears
+%                       stationary
+%       'N_VAR_GAM_AL' - number of samples over which to calculate the 
 %                       variance of the angle between the up vector and the 
 %                       accelerometer measurement vector expressed in the
-%                       estimated GFR
+%                       estimated GFR. Used when device is appears in
+%                       motion
 %       'N_VAR_GAM_M' - number of samples over which to calculate the 
 %                       variance of the angle between the north vector and
 %                       the magnetometer measurement vector projected to
